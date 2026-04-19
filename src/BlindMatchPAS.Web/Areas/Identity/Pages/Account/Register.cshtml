@@ -1,0 +1,163 @@
+@page
+@model BlindMatchPAS.Web.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="login-auth-shell">
+    <div class="login-auth-card">
+        <div class="login-auth-left">
+            <div class="login-auth-brand">
+                <div class="login-auth-brand-icon">
+                    <span class="material-symbols-outlined auth-fill">account_balance</span>
+                </div>
+                <div>
+                    <h1>BlindMatch PAS</h1>
+                    <p>ACADEMIC PROJECT APPROVAL SYSTEM</p>
+                </div>
+            </div>
+
+            <div class="login-auth-badge">
+                <span class="material-symbols-outlined auth-fill">verified_user</span>
+                <span>SECURE BLIND MATCHING</span>
+            </div>
+
+            <div class="login-auth-copy">
+                <h2>Create account</h2>
+                <p>
+                    Join the blind-match workflow. Students submit securely,
+                    supervisors review anonymously, and identities are revealed
+                    only after confirmation.
+                </p>
+            </div>
+
+            <div class="login-auth-preview">
+                <div class="login-preview-card preview-student">
+                    <h3>Student Submission</h3>
+                    <div class="preview-line long"></div>
+                    <div class="preview-line medium"></div>
+                    <div class="preview-line short"></div>
+                </div>
+
+                <div class="login-preview-card preview-review">
+                    <div class="preview-chip">BLIND REVIEW ACTIVE</div>
+                    <div class="preview-grid">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-auth-right">
+            <div class="login-auth-panel">
+                <div class="login-auth-tabs">
+                    <a asp-area="Identity" asp-page="/Account/Login">Login</a>
+                    <a asp-area="Identity" asp-page="/Account/Register" class="active">Register</a>
+                </div>
+
+                <div class="login-auth-form-wrap">
+                    <div class="login-auth-form-header">
+                        <h3>Create your account</h3>
+                        <p>Register with the correct role to access your dashboard.</p>
+                    </div>
+
+                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.AccountType"></label>
+                            <div class="role-toggle-light">
+                                <label class="role-toggle-light-option">
+                                    <input type="radio" asp-for="Input.AccountType" value="Student" />
+                                    <span>
+                                        <span class="material-symbols-outlined">school</span>
+                                        <span>Student</span>
+                                    </span>
+                                </label>
+
+                                <label class="role-toggle-light-option">
+                                    <input type="radio" asp-for="Input.AccountType" value="Supervisor" />
+                                    <span>
+                                        <span class="material-symbols-outlined">groups</span>
+                                        <span>Supervisor</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <span asp-validation-for="Input.AccountType" class="text-danger"></span>
+                        </div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.FullName"></label>
+                            <div class="login-auth-input-wrap">
+                                <span class="material-symbols-outlined">badge</span>
+                                <input asp-for="Input.FullName" class="login-auth-input" placeholder="Enter your full name" />
+                            </div>
+                            <span asp-validation-for="Input.FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.Email"></label>
+                            <div class="login-auth-input-wrap">
+                                <span class="material-symbols-outlined">mail</span>
+                                <input asp-for="Input.Email" class="login-auth-input" autocomplete="username" placeholder="Enter your email" />
+                            </div>
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.Password"></label>
+                            <div class="login-auth-input-wrap">
+                                <span class="material-symbols-outlined">lock</span>
+                                <input asp-for="Input.Password" id="registerPassword" class="login-auth-input with-toggle" autocomplete="new-password" placeholder="Create your password" />
+                                <button type="button" class="password-toggle-btn" onclick="togglePassword('registerPassword', 'registerPasswordIcon')">
+                                    <span id="registerPasswordIcon" class="material-symbols-outlined">visibility</span>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.ConfirmPassword"></label>
+                            <div class="login-auth-input-wrap">
+                                <span class="material-symbols-outlined">verified_user</span>
+                                <input asp-for="Input.ConfirmPassword" id="registerConfirmPassword" class="login-auth-input with-toggle" autocomplete="new-password" placeholder="Confirm your password" />
+                                <button type="button" class="password-toggle-btn" onclick="togglePassword('registerConfirmPassword', 'registerConfirmPasswordIcon')">
+                                    <span id="registerConfirmPasswordIcon" class="material-symbols-outlined">visibility</span>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <button id="registerSubmit" type="submit" class="login-auth-btn">
+                            <span>Register</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        }
+    </script>
+}

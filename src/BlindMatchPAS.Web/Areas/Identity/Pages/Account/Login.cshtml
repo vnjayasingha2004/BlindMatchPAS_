@@ -1,0 +1,128 @@
+@page
+@model BlindMatchPAS.Web.Areas.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="login-auth-shell">
+    <div class="login-auth-card">
+        <div class="login-auth-left">
+            <div class="login-auth-brand">
+                <div class="login-auth-brand-icon">
+                    <span class="material-symbols-outlined auth-fill">account_balance</span>
+                </div>
+                <div>
+                    <h1>BlindMatch PAS</h1>
+                    <p>ACADEMIC PROJECT APPROVAL SYSTEM</p>
+                </div>
+            </div>
+
+            <div class="login-auth-badge">
+                <span class="material-symbols-outlined auth-fill">verified_user</span>
+                <span>SECURE BLIND MATCHING</span>
+            </div>
+
+            <div class="login-auth-copy">
+                <h2>Welcome back</h2>
+                <p>
+                    Sign in to continue your blind-match workflow. Supervisors review anonymously,
+                    students submit securely, and identities are revealed only after confirmation.
+                </p>
+            </div>
+
+            <div class="login-auth-preview">
+                <div class="login-preview-card preview-student">
+                    <h3>Student Submission</h3>
+                    <div class="preview-line long"></div>
+                    <div class="preview-line medium"></div>
+                    <div class="preview-line short"></div>
+                </div>
+
+                <div class="login-preview-card preview-review">
+                    <div class="preview-chip">BLIND REVIEW ACTIVE</div>
+                    <div class="preview-grid">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-auth-right">
+            <div class="login-auth-panel">
+                <div class="login-auth-tabs">
+                    <a asp-area="Identity" asp-page="/Account/Login" class="active">Login</a>
+                    <a asp-area="Identity" asp-page="/Account/Register">Register</a>
+                </div>
+
+                <div class="login-auth-form-wrap">
+                    <div class="login-auth-form-header">
+                        <h3>Login to your account</h3>
+                        <p>Use your role-based account to access the correct dashboard.</p>
+                    </div>
+
+                    <form id="account" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.Email"></label>
+                            <div class="login-auth-input-wrap">
+                                <span class="material-symbols-outlined">mail</span>
+                                <input asp-for="Input.Email" class="login-auth-input" autocomplete="username" placeholder="Enter your email" />
+                            </div>
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="login-auth-form-group">
+                            <label asp-for="Input.Password"></label>
+                            <div class="login-auth-input-wrap">
+                                <span class="material-symbols-outlined">lock</span>
+                                <input asp-for="Input.Password" id="loginPassword" class="login-auth-input with-toggle" autocomplete="current-password" placeholder="Enter your password" />
+                                <button type="button" class="password-toggle-btn" onclick="togglePassword('loginPassword', 'loginPasswordIcon')">
+                                    <span id="loginPasswordIcon" class="material-symbols-outlined">visibility</span>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="login-auth-row">
+                            <label class="login-auth-check">
+                                <input asp-for="Input.RememberMe" />
+                                <span>Remember me</span>
+                            </label>
+
+                            <a asp-area="Identity" asp-page="/Account/ForgotPassword" class="login-auth-link">Forgot password?</a>
+                        </div>
+
+                        <button id="login-submit" type="submit" class="login-auth-btn">
+                            <span>Login</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        }
+    </script>
+}
