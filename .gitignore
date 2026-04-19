@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+appsettings.Development.json
+wwwroot/uploads/
+TestResults/
+
+printf "\nsrc/BlindMatchPAS.Web/App_Data/\nsrc/BlindMatchPAS.Web/wwwroot/uploads/\n" >> .gitignore

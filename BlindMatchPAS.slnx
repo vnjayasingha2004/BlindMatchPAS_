@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BlindMatchPAS.Web/BlindMatchPAS.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BlindMatchPAS.Tests/BlindMatchPAS.Tests.csproj" />
+  </Folder>
+</Solution>
