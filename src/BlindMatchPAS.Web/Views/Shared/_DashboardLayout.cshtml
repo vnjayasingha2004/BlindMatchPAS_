@@ -1,0 +1,159 @@
+@using BlindMatchPAS.Web.Authorization
+@using BlindMatchPAS.Web.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var currentUser = User.Identity?.IsAuthenticated == true ? await UserManager.GetUserAsync(User) : null;
+    var avatarPath = currentUser?.AvatarPath;
+    var fullName = string.IsNullOrWhiteSpace(currentUser?.FullName) ? User.Identity?.Name : currentUser!.FullName;
+    var initial = !string.IsNullOrWhiteSpace(fullName) ? fullName.Substring(0, 1).ToUpper() : "U";
+    var userTheme = string.IsNullOrWhiteSpace(currentUser?.ThemePreference) ? "light" : currentUser!.ThemePreference;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BlindMatch PAS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="stitch-body" data-theme="@userTheme">
+    <div class="stitch-shell">
+        <aside class="stitch-sidebar">
+            <div>
+                <div class="stitch-brand">
+                    <div class="stitch-brand-icon"><span class="material-symbols-outlined stitch-fill">account_balance</span></div>
+                    <div>
+                        <h1 class="stitch-brand-title">BlindMatch PAS</h1>
+                        <p class="stitch-brand-subtitle">Academic Project Approval System</p>
+                    </div>
+                </div>
+                <nav class="stitch-nav">
+                    @if (User.IsInRole(Roles.Student))
+                    {
+                        <a asp-controller="Student" asp-action="Dashboard" asp-fragment="overview" class="stitch-nav-link" data-nav-target="overview"><span class="material-symbols-outlined stitch-fill">dashboard</span><span>Overview</span></a>
+                        <a asp-controller="Student" asp-action="Dashboard" asp-fragment="archive" class="stitch-nav-link" data-nav-target="archive"><span class="material-symbols-outlined">folder_open</span><span>My Proposals</span></a>
+                    }
+                    @if (User.IsInRole(Roles.Supervisor))
+                    {
+                        <a asp-controller="Supervisor" asp-action="Dashboard" asp-fragment="overview" class="stitch-nav-link" data-nav-target="overview"><span class="material-symbols-outlined stitch-fill">dashboard</span><span>Overview</span></a>
+                        <a asp-controller="Supervisor" asp-action="Dashboard" asp-fragment="review-queue" class="stitch-nav-link" data-nav-target="review-queue"><span class="material-symbols-outlined">fact_check</span><span>Review Queue</span></a>
+                    }
+                    @if (User.IsInRole(Roles.ModuleLeader) || User.IsInRole(Roles.SystemAdmin))
+                    {
+                        <a asp-controller="Admin" asp-action="Dashboard" asp-fragment="overview" class="stitch-nav-link" data-nav-target="overview"><span class="material-symbols-outlined stitch-fill">dashboard</span><span>Overview</span></a>
+                        <a asp-controller="Admin" asp-action="Dashboard" asp-fragment="management" class="stitch-nav-link" data-nav-target="management"><span class="material-symbols-outlined">admin_panel_settings</span><span>Management</span></a>
+                        <a asp-controller="Admin" asp-action="Dashboard" asp-fragment="oversight" class="stitch-nav-link" data-nav-target="oversight"><span class="material-symbols-outlined">monitoring</span><span>Oversight</span></a>
+                    }
+                    <a asp-controller="Settings" asp-action="Index" class="stitch-nav-link" id="settingsNavLink"><span class="material-symbols-outlined">settings</span><span>Settings</span></a>
+                </nav>
+            </div>
+            <div class="stitch-sidebar-footer">
+                <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                    <button type="submit" class="stitch-nav-link stitch-logout-btn"><span class="material-symbols-outlined">logout</span><span>Logout</span></button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="stitch-main">
+            <header class="stitch-topbar">
+                <div class="stitch-search-wrap" style="max-width:560px;">
+                    <span class="material-symbols-outlined stitch-search-icon">search</span>
+                    <input id="dashboardSearch" type="text" placeholder="Search projects..." class="stitch-search" autocomplete="off" />
+                </div>
+
+                <div class="stitch-top-actions">
+                    <button type="button" class="stitch-icon-btn" title="Toggle theme" onclick="toggleTheme()">
+                        <span class="material-symbols-outlined">dark_mode</span>
+                    </button>
+                    <a asp-controller="Settings" asp-action="Index" class="stitch-avatar-link" title="Profile settings">
+                        @if (!string.IsNullOrWhiteSpace(avatarPath))
+                        {
+                            <img src="@avatarPath" alt="Avatar" class="stitch-avatar-img" />
+                        }
+                        else
+                        {
+                            <div class="stitch-avatar">@initial</div>
+                        }
+                    </a>
+                </div>
+            </header>
+
+            <div class="stitch-content">
+                <div id="stitchSearchEmpty" class="stitch-search-empty" hidden>No matching projects found.</div>
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute("data-theme") || "light";
+            const next = current === "dark" ? "light" : "dark";
+            body.setAttribute("data-theme", next);
+            localStorage.setItem("blindmatch-theme", next);
+        }
+
+        (function () {
+            const saved = localStorage.getItem("blindmatch-theme");
+            if (saved) document.body.setAttribute("data-theme", saved);
+
+            function updateActiveNav() {
+                const currentPath = window.location.pathname.toLowerCase();
+                const hash = window.location.hash.replace("#", "");
+                const navLinks = document.querySelectorAll(".stitch-nav-link[data-nav-target]");
+                const settingsLink = document.getElementById("settingsNavLink");
+                navLinks.forEach(link => link.classList.remove("active"));
+                if (settingsLink) settingsLink.classList.remove("active");
+                if (currentPath.includes("/settings")) {
+                    if (settingsLink) settingsLink.classList.add("active");
+                    return;
+                }
+                const target = hash || "overview";
+                const activeLink = document.querySelector(`.stitch-nav-link[data-nav-target="${target}"]`);
+                if (activeLink) activeLink.classList.add("active");
+            }
+
+            function setupSearch() {
+                const input = document.getElementById("dashboardSearch");
+                const items = Array.from(document.querySelectorAll("[data-search-item]"));
+                const empty = document.getElementById("stitchSearchEmpty");
+                if (!input || items.length === 0) return;
+
+                function applySearch() {
+                    const query = input.value.trim().toLowerCase();
+                    let visibleCount = 0;
+                    items.forEach(item => {
+                        const text = ((item.dataset.searchText || item.textContent || "")).toLowerCase();
+                        const matches = !query || text.includes(query);
+                        item.hidden = !matches;
+                        if (matches) visibleCount++;
+                    });
+                    if (empty) empty.hidden = !query || visibleCount > 0;
+                }
+
+                input.addEventListener("input", applySearch);
+                input.addEventListener("keydown", function (event) {
+                    if (event.key === "Escape") {
+                        input.value = "";
+                        applySearch();
+                    }
+                });
+            }
+
+            updateActiveNav();
+            setupSearch();
+            window.addEventListener("hashchange", updateActiveNav);
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

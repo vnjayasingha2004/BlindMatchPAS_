@@ -1,0 +1,206 @@
+@model BlindMatchPAS.Web.Models.ViewModels.SupervisorDashboardViewModel
+@using BlindMatchPAS.Web.Models.Common
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Supervisor Dashboard";
+}
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success mb-4">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] is not null)
+{
+    <div class="alert alert-danger mb-4">@TempData["ErrorMessage"]</div>
+}
+
+<section id="overview" class="stitch-page-header stitch-section-anchor">
+    <div>
+        <h2 class="stitch-page-title">Supervisor Dashboard</h2>
+        <p class="stitch-page-subtitle">Manage your expertise profile, review anonymous proposals, and confirm final matches.</p>
+    </div>
+    <div class="stitch-chip"><span class="material-symbols-outlined stitch-fill">tune</span><span>Blind Review Queue</span></div>
+</section>
+
+<div class="stitch-grid">
+    <div id="review-queue" class="stitch-section-anchor">
+        <div class="stitch-card" style="margin-bottom:24px;">
+            <div class="stitch-card-header">
+                <h3 class="stitch-card-title">Expertise Preferences</h3>
+                <p class="stitch-page-subtitle" style="margin-top:6px;">Choose your preferred research areas to auto-filter proposals on your dashboard.</p>
+            </div>
+            <div class="stitch-card-body">
+                <form asp-action="SaveExpertise" method="post">
+                    @Html.AntiForgeryToken()
+                    <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px;">
+                        @foreach (var area in Model.AvailableResearchAreas)
+                        {
+                            var isChecked = Model.PreferredResearchAreas.Contains(area);
+                            <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #d6dbe3;border-radius:14px;background:#fff;cursor:pointer;">
+                                <input type="checkbox" name="preferredResearchAreas" value="@area" checked="@(isChecked ? "checked" : null)" />
+                                <span>@area</span>
+                            </label>
+                        }
+                    </div>
+                    <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+                        <button type="submit" class="stitch-btn">Save Expertise</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="stitch-card">
+            <div class="stitch-card-header">
+                <h3 class="stitch-card-title">Review Queue</h3>
+                <p class="stitch-page-subtitle" style="margin-top:6px;">Browse anonymous proposals filtered by your expertise or the selected research area.</p>
+            </div>
+
+            <div class="stitch-card-body">
+                <form method="get" asp-action="Dashboard" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:24px;">
+                    <button type="submit" name="researchArea" value="" style="border:none;border-radius:999px;padding:10px 16px;background:#003178;color:white;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">filter_list</span>
+                        <span>All Areas</span>
+                    </button>
+                    @foreach (var area in Model.AvailableResearchAreas)
+                    {
+                        var isActive = Model.SelectedResearchArea == area;
+                        <button type="submit" name="researchArea" value="@area" style="border:none;border-radius:999px;padding:10px 16px;background:@(isActive ? "#dbeafe" : "#e6e8ea");color:@(isActive ? "#1d4ed8" : "#475569");font-size:14px;font-weight:@(isActive ? "700" : "600");">@area</button>
+                    }
+                </form>
+
+                @if (Model.Proposals.Any())
+                {
+                    @foreach (var proposal in Model.Proposals)
+                    {
+                        var hasInterest = Model.MyInterests.Any(i => i.ProjectProposalId == proposal.Id);
+                        var attachmentNames = proposal.Attachments != null ? string.Join(" ", proposal.Attachments.Select(a => a.OriginalFileName)) : string.Empty;
+                        var searchText = $"{proposal.Title} {proposal.ResearchArea} {proposal.TechnicalStack} {proposal.Status} {proposal.Abstract} {attachmentNames}";
+                        <div class="stitch-list-card" data-search-item data-search-text="@searchText">
+                            <div style="display:flex;justify-content:space-between;align-items:start;gap:16px;">
+                                <div>
+                                    <div style="display:inline-flex;align-items:center;gap:8px;background:#f2f4f6;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800;color:#434652;margin-bottom:14px;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">person_off</span>
+                                        <span>Anonymous Student #@proposal.Id</span>
+                                    </div>
+                                    <h5 style="margin-bottom:8px;">@proposal.Title</h5>
+                                    <div class="stitch-muted" style="font-size:13px;margin-bottom:8px;">@proposal.ResearchArea • @proposal.TechnicalStack</div>
+                                </div>
+                                <div style="padding:8px 12px;border-radius:999px;background:#e0f2fe;color:#0c4a6e;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">@proposal.Status</div>
+                            </div>
+                            <p style="margin:12px 0 14px;color:#475569;font-size:14px;line-height:1.7;">@proposal.Abstract</p>
+
+                            @if (proposal.Attachments != null && proposal.Attachments.Any())
+                            {
+                                <div style="margin-bottom:14px;">
+                                    <strong style="font-size:13px;">Attachments</strong>
+                                    <ul style="margin:8px 0 0;padding-left:18px;">
+                                        @for (var index = 0; index < proposal.Attachments.Count; index++)
+                                        {
+                                            var file = proposal.Attachments.ElementAt(index);
+                                            var extension = System.IO.Path.GetExtension(file.OriginalFileName);
+                                            <li style="margin-bottom:6px;">
+                                                <a asp-controller="Attachments" asp-action="Download" asp-route-id="@file.Id" target="_blank" style="text-decoration:none;color:#1d4ed8;font-weight:600;">Supporting File @(index + 1)@extension</a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+                                <div style="font-size:12px;color:#64748b;">Submitted: @proposal.CreatedAtUtc.ToLocalTime()</div>
+                                @if (!hasInterest)
+                                {
+                                    <form asp-action="ExpressInterest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="proposalId" value="@proposal.Id" />
+                                        <button type="submit" class="stitch-btn"><span>Express Interest</span><span class="material-symbols-outlined">chevron_right</span></button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <div style="padding:10px 14px;border-radius:16px;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:700;">Interest already submitted</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="padding:18px;border-radius:18px;background:#f8fafc;color:#64748b;">No proposals match the selected or preferred research areas.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="stitch-card" style="margin-bottom:24px;">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">My Interests</h3></div>
+            <div class="stitch-card-body">
+                @if (Model.MyInterests.Any())
+                {
+                    @foreach (var interest in Model.MyInterests)
+                    {
+                        var proposal = interest.ProjectProposal;
+                        if (proposal is null) { continue; }
+                        var attachmentNames = proposal.Attachments != null ? string.Join(" ", proposal.Attachments.Select(a => a.OriginalFileName)) : string.Empty;
+                        var searchText = $"{proposal.Title} {proposal.ResearchArea} {proposal.TechnicalStack} {proposal.Status} {proposal.Abstract} {attachmentNames}";
+                        <div class="stitch-list-card" data-search-item data-search-text="@searchText">
+                            <h5>@proposal.Title</h5>
+                            <div class="stitch-muted" style="font-size:13px;margin-bottom:8px;">@proposal.ResearchArea • @proposal.TechnicalStack</div>
+                            <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Interest sent: @interest.CreatedAtUtc.ToLocalTime()</div>
+
+                            @if (proposal.Attachments != null && proposal.Attachments.Any())
+                            {
+                                <div style="margin-bottom:14px;">
+                                    <strong style="font-size:13px;">Attachments</strong>
+                                    <ul style="margin:8px 0 0;padding-left:18px;">
+                                        @for (var index = 0; index < proposal.Attachments.Count; index++)
+                                        {
+                                            var file = proposal.Attachments.ElementAt(index);
+                                            var extension = System.IO.Path.GetExtension(file.OriginalFileName);
+                                            <li style="margin-bottom:6px;"><a asp-controller="Attachments" asp-action="Download" asp-route-id="@file.Id" target="_blank" style="text-decoration:none;color:#1d4ed8;font-weight:600;">Supporting File @(index + 1)@extension</a></li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+
+                            @if (interest.IsConfirmed)
+                            {
+                                <div class="alert alert-success mb-0">Match confirmed. Student identity is now visible.</div>
+                                <div style="margin-top:12px;font-size:14px;color:#334155;">
+                                    <div><strong>Student Name:</strong> @proposal.StudentUser?.FullName</div>
+                                    <div><strong>Student Email:</strong> @proposal.StudentUser?.Email</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <form asp-action="ConfirmMatch" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="interestId" value="@interest.Id" />
+                                    <button type="submit" class="stitch-btn"><span class="material-symbols-outlined">verified</span><span>Confirm Match</span></button>
+                                </form>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="padding:18px;border-radius:18px;background:#f8fafc;color:#64748b;">You have not expressed interest in any proposal yet.</div>
+                }
+            </div>
+        </div>
+
+        <div class="stitch-card">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">Blind Review Rules</h3></div>
+            <div class="stitch-card-body">
+                <ul style="margin:0;padding-left:18px;color:#475569;line-height:1.9;">
+                    <li>Student identity stays hidden until you confirm the match.</li>
+                    <li>Attachments are downloadable, but sensitive names are masked in the UI.</li>
+                    <li>Expertise selections help narrow your blind-review queue.</li>
+                    <li>Only one supervisor can finalize each proposal.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

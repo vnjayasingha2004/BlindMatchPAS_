@@ -1,0 +1,62 @@
+@model BlindMatchPAS.Web.Models.ViewModels.SettingsViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Settings";
+}
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success mb-4">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<section class="stitch-page-header">
+    <div>
+        <h2 class="stitch-page-title">Profile & Appearance</h2>
+        <p class="stitch-page-subtitle">Update your name, avatar, and theme preference.</p>
+    </div>
+</section>
+
+<div class="stitch-card" style="max-width:780px;">
+    <div class="stitch-card-body">
+        <form asp-action="Index" method="post" enctype="multipart/form-data">
+            <div class="stitch-form-group">
+                <label asp-for="FullName" class="stitch-form-label"></label>
+                <input asp-for="FullName" class="stitch-input" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+
+            <div class="stitch-form-group">
+                <label asp-for="ThemePreference" class="stitch-form-label"></label>
+                <select asp-for="ThemePreference" class="stitch-select">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+
+            <div class="stitch-form-group">
+                <label asp-for="AvatarFile" class="stitch-form-label"></label>
+                <input asp-for="AvatarFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                <span asp-validation-for="AvatarFile" class="text-danger"></span>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CurrentAvatarPath))
+            {
+                <div style="margin-bottom:18px;">
+                    <img src="@Model.CurrentAvatarPath" alt="Current Avatar" style="width:84px;height:84px;border-radius:999px;object-fit:cover;border:1px solid #d1d5db;" />
+                </div>
+            }
+
+            <button type="submit" class="stitch-btn">
+                <span class="material-symbols-outlined">save</span>
+                <span>Save Settings</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

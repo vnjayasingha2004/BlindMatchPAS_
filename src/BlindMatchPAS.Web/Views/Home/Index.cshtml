@@ -1,0 +1,215 @@
+@using BlindMatchPAS.Web.Authorization
+@using BlindMatchPAS.Web.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    Layout = null;
+    ViewData["Title"] = "BlindMatch PAS";
+
+    var dashboardUrl = Url.Action("Index", "Home");
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        if (User.IsInRole(Roles.Student))
+        {
+            dashboardUrl = Url.Action("Dashboard", "Student");
+        }
+        else if (User.IsInRole(Roles.Supervisor))
+        {
+            dashboardUrl = Url.Action("Dashboard", "Supervisor");
+        }
+        else if (User.IsInRole(Roles.ModuleLeader) || User.IsInRole(Roles.SystemAdmin))
+        {
+            dashboardUrl = Url.Action("Dashboard", "Admin");
+        }
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlindMatch PAS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+</head>
+<body class="landing-body" data-theme="light">
+    <header class="landing-header">
+        <div class="landing-container landing-nav">
+            <a asp-controller="Home" asp-action="Index" class="landing-brand">
+                <div class="landing-brand-icon">
+                    <span class="material-symbols-outlined">account_balance</span>
+                </div>
+                <div>
+                    <div class="landing-brand-title">BlindMatch PAS</div>
+                    <div class="landing-brand-subtitle">Academic Project Approval System</div>
+                </div>
+            </a>
+
+            <div class="landing-actions">
+                <button type="button" class="landing-theme-btn" id="landingThemeToggle" title="Toggle theme">
+                    <span class="material-symbols-outlined" id="landingThemeIcon">dark_mode</span>
+                </button>
+
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <a href="@dashboardUrl" class="landing-btn landing-btn-secondary">Dashboard</a>
+
+                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                        <button type="submit" class="landing-btn landing-btn-primary">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login" class="landing-btn landing-btn-secondary">Login</a>
+                    <a asp-area="Identity" asp-page="/Account/Register" class="landing-btn landing-btn-primary">Get Started</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <main class="landing-main">
+        <section class="landing-hero">
+            <div class="landing-container">
+                <div class="landing-hero-card">
+                    <div class="landing-chip">
+                        <span class="material-symbols-outlined">science</span>
+                        <span>Blind Academic Matching Protocol</span>
+                    </div>
+
+                    <h1 class="landing-hero-title">Preserve fairness.<br /><span>Advance research.</span></h1>
+
+                    <p class="landing-hero-text">
+                        BlindMatch PAS gives students, supervisors, and academic leaders a secure workflow for proposal submission,
+                        anonymous review, attachment handling, and final supervisor matching.
+                    </p>
+
+                    <div class="landing-hero-actions">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <a href="@dashboardUrl" class="landing-btn landing-btn-primary landing-btn-lg">
+                                <span>Go to Dashboard</span>
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Register" class="landing-btn landing-btn-primary landing-btn-lg">
+                                <span>Create Account</span>
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </a>
+
+                            <a asp-area="Identity" asp-page="/Account/Login" class="landing-btn landing-btn-secondary landing-btn-lg">
+                                <span>Institution Login</span>
+                                <span class="material-symbols-outlined">login</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="landing-section">
+            <div class="landing-container">
+                <div class="landing-grid">
+                    <article class="landing-card">
+                        <div class="landing-card-icon blue"><span class="material-symbols-outlined">balance</span></div>
+                        <h3>Fair Matching</h3>
+                        <p>Project proposals are reviewed through a blind process so students are judged by project quality, research area, and technical fit.</p>
+                    </article>
+
+                    <article class="landing-card landing-card-wide">
+                        <div class="landing-card-icon cyan"><span class="material-symbols-outlined">visibility_off</span></div>
+                        <h3>Blind Review Protection</h3>
+                        <p>Student identity stays hidden during early review. Supervisors see the proposal, abstract, research area, technical stack, and supporting attachments without bias.</p>
+                        <div class="landing-progress">
+                            <div class="landing-progress-track"><div class="landing-progress-step"></div></div>
+                            <span>Phase 2 Review</span>
+                        </div>
+                    </article>
+
+                    <article class="landing-card landing-card-full">
+                        <div class="landing-card-split">
+                            <div>
+                                <div class="landing-card-icon blue"><span class="material-symbols-outlined">hub</span></div>
+                                <h3>Secure Collaboration After Match</h3>
+                                <p>Once a supervisor confirms the match, identity is revealed and the system transitions cleanly from blind review into supervised academic work.</p>
+                            </div>
+                            <div class="landing-mini-panel">
+                                <div class="landing-mini-head">
+                                    <div class="landing-mini-user">
+                                        <div class="landing-mini-avatar"><span class="material-symbols-outlined">person</span></div>
+                                        <div>
+                                            <div class="landing-line lg"></div>
+                                            <div class="landing-line sm"></div>
+                                        </div>
+                                    </div>
+                                    <div class="landing-status">Matched</div>
+                                </div>
+                                <div class="landing-lines">
+                                    <div class="landing-line"></div>
+                                    <div class="landing-line short"></div>
+                                    <div class="landing-line mid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-section">
+            <div class="landing-container">
+                <div class="landing-workflow-head">
+                    <h2>How BlindMatch PAS works</h2>
+                    <p>A simple academic workflow for secure project approval and supervisor matching.</p>
+                </div>
+                <div class="landing-steps">
+                    <div class="landing-step"><div class="landing-step-number">1</div><h4>Student submits proposal</h4><p>Title, abstract, research area, technical stack, and evidence attachments are uploaded.</p></div>
+                    <div class="landing-step"><div class="landing-step-number">2</div><h4>Supervisor reviews anonymously</h4><p>The supervisor checks project quality without seeing student identity.</p></div>
+                    <div class="landing-step"><div class="landing-step-number">3</div><h4>Interest is expressed</h4><p>The supervisor can express interest and proceed toward matching.</p></div>
+                    <div class="landing-step"><div class="landing-step-number">4</div><h4>Match is confirmed</h4><p>Identity is revealed only after confirmation so the process stays fair and structured.</p></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="landing-footer">
+        <div class="landing-container landing-footer-row">
+            <div>
+                <div class="landing-footer-title">BlindMatch PAS</div>
+                <p class="landing-footer-text">Blind proposal submission, academic fairness, and secure supervisor matching.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            const body = document.body;
+            const button = document.getElementById("landingThemeToggle");
+            const icon = document.getElementById("landingThemeIcon");
+            const saved = localStorage.getItem("blindmatch-theme") || "light";
+
+            function applyTheme(theme) {
+                body.setAttribute("data-theme", theme);
+                localStorage.setItem("blindmatch-theme", theme);
+                if (icon) icon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
+            }
+
+            applyTheme(saved);
+            if (button) {
+                button.addEventListener("click", function () {
+                    const current = body.getAttribute("data-theme") || "light";
+                    applyTheme(current === "dark" ? "light" : "dark");
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

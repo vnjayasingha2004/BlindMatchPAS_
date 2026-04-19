@@ -1,0 +1,187 @@
+@model BlindMatchPAS.Web.Models.ViewModels.AdminDashboardViewModel
+@using BlindMatchPAS.Web.Authorization
+@using BlindMatchPAS.Web.Models.Common
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success mb-4">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] is not null)
+{
+    <div class="alert alert-danger mb-4">@TempData["ErrorMessage"]</div>
+}
+
+<section id="overview" class="stitch-page-header stitch-section-anchor">
+    <div>
+        <h2 class="stitch-page-title">Admin Dashboard</h2>
+        <p class="stitch-page-subtitle">Manage research areas, create user accounts, and intervene when project allocations need changes.</p>
+    </div>
+    <div class="stitch-chip"><span class="material-symbols-outlined stitch-fill">monitoring</span><span>Oversight Active</span></div>
+</section>
+
+<div class="stitch-grid">
+    <div>
+        <div id="management" class="stitch-card stitch-section-anchor" style="margin-bottom:28px;">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">Research Area Management</h3></div>
+            <div class="stitch-card-body">
+                <form asp-action="AddResearchArea" method="post" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+                    @Html.AntiForgeryToken()
+                    <input type="text" name="areaName" class="stitch-input" style="max-width:360px;" placeholder="Add new research area" />
+                    <button type="submit" class="stitch-btn">Add Area</button>
+                </form>
+
+                <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                    @foreach (var area in Model.ResearchAreas)
+                    {
+                        <form asp-action="RemoveResearchArea" method="post" style="margin:0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="areaName" value="@area" />
+                            <button type="submit" class="btn btn-outline-secondary">@area</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="stitch-card" style="margin-bottom:28px;">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">User Management</h3></div>
+            <div class="stitch-card-body">
+                <form asp-action="CreateUser" method="post">
+                    @Html.AntiForgeryToken()
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div class="stitch-form-group">
+                            <label asp-for="CreateUserForm.FullName" class="stitch-form-label"></label>
+                            <input asp-for="CreateUserForm.FullName" class="stitch-input" />
+                        </div>
+                        <div class="stitch-form-group">
+                            <label asp-for="CreateUserForm.Email" class="stitch-form-label"></label>
+                            <input asp-for="CreateUserForm.Email" class="stitch-input" />
+                        </div>
+                        <div class="stitch-form-group">
+                            <label asp-for="CreateUserForm.Password" class="stitch-form-label"></label>
+                            <input asp-for="CreateUserForm.Password" type="password" class="stitch-input" />
+                        </div>
+                        <div class="stitch-form-group">
+                            <label asp-for="CreateUserForm.Role" class="stitch-form-label"></label>
+                            <select asp-for="CreateUserForm.Role" class="stitch-select">
+                                <option value="">Select role</option>
+                                <option value="@Roles.Student">Student</option>
+                                <option value="@Roles.Supervisor">Supervisor</option>
+                                <option value="@Roles.ModuleLeader">Module Leader</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="stitch-btn">Create User</button>
+                </form>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px;">
+                    <div>
+                        <h5>Supervisors</h5>
+                        <ul style="padding-left:18px;">
+                            @foreach (var supervisor in Model.Supervisors)
+                            {
+                                <li>@supervisor.FullName (@supervisor.Email)</li>
+                            }
+                        </ul>
+                    </div>
+                    <div>
+                        <h5>Students</h5>
+                        <ul style="padding-left:18px;">
+                            @foreach (var student in Model.Students)
+                            {
+                                <li>@student.FullName (@student.Email)</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="oversight" class="stitch-card stitch-section-anchor">
+            <div class="stitch-card-header">
+                <h3 class="stitch-card-title">Allocation Oversight</h3>
+                <p class="stitch-page-subtitle" style="margin-top:6px;">Search by title, area, status, student, or supervisor. Reassign any proposal if intervention is needed.</p>
+            </div>
+            <div class="stitch-card-body">
+                @if (Model.AllProposals.Any())
+                {
+                    @foreach (var proposal in Model.AllProposals)
+                    {
+                        var badgeBg = proposal.Status == ProposalStatuses.Matched ? "#dcfce7" : proposal.Status == ProposalStatuses.UnderReview ? "#fef3c7" : proposal.Status == ProposalStatuses.Withdrawn ? "#e5e7eb" : "#e0f2fe";
+                        var badgeColor = proposal.Status == ProposalStatuses.Matched ? "#166534" : proposal.Status == ProposalStatuses.UnderReview ? "#92400e" : proposal.Status == ProposalStatuses.Withdrawn ? "#4b5563" : "#0c4a6e";
+                        var searchText = $"{proposal.Title} {proposal.ResearchArea} {proposal.TechnicalStack} {proposal.Status} {proposal.Abstract} {proposal.StudentUser?.FullName} {proposal.StudentUser?.Email} {proposal.MatchedSupervisor?.FullName} {proposal.MatchedSupervisor?.Email}";
+                        <div class="stitch-list-card" data-search-item data-search-text="@searchText">
+                            <div style="display:flex;justify-content:space-between;align-items:start;gap:18px;">
+                                <div>
+                                    <h5 style="margin-bottom:8px;">@proposal.Title</h5>
+                                    <div class="stitch-muted" style="font-size:13px;">@proposal.ResearchArea • @proposal.TechnicalStack</div>
+                                </div>
+                                <div style="padding:8px 12px;border-radius:999px;background:@badgeBg;color:@badgeColor;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;">@proposal.Status</div>
+                            </div>
+                            <p style="margin:12px 0 14px;color:#475569;font-size:14px;line-height:1.7;">@proposal.Abstract</p>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div style="background:#f8fafc;border-radius:16px;padding:14px;">
+                                    <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:6px;">Student</div>
+                                    <div style="font-size:14px;font-weight:700;color:#0f172a;">@(proposal.Status == ProposalStatuses.Matched ? proposal.StudentUser?.FullName : "Hidden before confirmed match")</div>
+                                    <div style="font-size:13px;color:#64748b;">@(proposal.Status == ProposalStatuses.Matched ? proposal.StudentUser?.Email : "")</div>
+                                </div>
+                                <div style="background:#f8fafc;border-radius:16px;padding:14px;">
+                                    <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:6px;">Supervisor</div>
+                                    <div style="font-size:14px;font-weight:700;color:#0f172a;">@(proposal.MatchedSupervisor?.FullName ?? "Not assigned")</div>
+                                    <div style="font-size:13px;color:#64748b;">@(proposal.MatchedSupervisor?.Email ?? "")</div>
+                                </div>
+                            </div>
+                            <form asp-action="Reassign" method="post" style="margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="proposalId" value="@proposal.Id" />
+                                <select name="supervisorUserId" class="stitch-select" style="max-width:320px;">
+                                    <option value="">Select supervisor</option>
+                                    @foreach (var supervisor in Model.Supervisors)
+                                    {
+                                        <option value="@supervisor.Id" selected="@(proposal.MatchedSupervisorId == supervisor.Id ? "selected" : null)">@supervisor.FullName (@supervisor.Email)</option>
+                                    }
+                                </select>
+                                <button type="submit" class="stitch-btn">Assign / Reassign</button>
+                            </form>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="padding:18px;border-radius:18px;background:#f8fafc;color:#64748b;">No proposals found.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="stitch-card" style="margin-bottom:24px;">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">System Snapshot</h3></div>
+            <div class="stitch-card-body">
+                <div style="display:grid;gap:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#eff6ff;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Total Proposals</div><div style="font-size:13px;color:#334155;">Overall submissions in the system</div></div><div style="font-size:22px;font-weight:900;color:#2563eb;">@Model.TotalProposals</div></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#eff6ff;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Pending Queue</div><div style="font-size:13px;color:#334155;">Awaiting first faculty interaction</div></div><div style="font-size:22px;font-weight:900;color:#2563eb;">@Model.PendingCount</div></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#fff7ed;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Under Review</div><div style="font-size:13px;color:#334155;">Blind review in progress</div></div><div style="font-size:22px;font-weight:900;color:#d97706;">@Model.UnderReviewCount</div></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#f0fdf4;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Confirmed Matches</div><div style="font-size:13px;color:#334155;">Identity already revealed</div></div><div style="font-size:22px;font-weight:900;color:#16a34a;">@Model.MatchedCount</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stitch-card">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">Coordinator Notes</h3></div>
+            <div class="stitch-card-body">
+                <ul style="margin:0;padding-left:18px;color:#475569;line-height:1.9;">
+                    <li>Research areas are coordinator-managed and reused across student and supervisor workflows.</li>
+                    <li>Manual reassignment allows intervention when supervisor allocation needs correction.</li>
+                    <li>New users can be created directly from the admin dashboard.</li>
+                    <li>Search and filters help validate fairness and project-state progression.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

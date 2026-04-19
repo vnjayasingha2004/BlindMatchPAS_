@@ -1,0 +1,195 @@
+@model BlindMatchPAS.Web.Models.ViewModels.StudentDashboardViewModel
+@using BlindMatchPAS.Web.Models.Common
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Student Dashboard";
+}
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success mb-4">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] is not null)
+{
+    <div class="alert alert-danger mb-4">@TempData["ErrorMessage"]</div>
+}
+
+<section id="overview" class="stitch-page-header stitch-section-anchor">
+    <div>
+        <h2 class="stitch-page-title">Student Dashboard</h2>
+        <p class="stitch-page-subtitle">Submit, edit, and track your proposals until a supervisor confirms a match.</p>
+    </div>
+    <div class="stitch-chip"><span class="stitch-pulse"></span><span>Blind Matching Active</span></div>
+</section>
+
+<div class="stitch-grid">
+    <div>
+        <div class="stitch-card">
+            <div class="stitch-card-header" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div>
+                    <h3 class="stitch-card-title">New Proposal</h3>
+                    <p class="stitch-page-subtitle" style="margin-top:6px;">Create a new project proposal with optional evidence attachments.</p>
+                </div>
+                <div style="width:42px;height:42px;border-radius:16px;background:#eef2ff;display:flex;align-items:center;justify-content:center;color:#1d4ed8;">
+                    <span class="material-symbols-outlined stitch-fill">library_add</span>
+                </div>
+            </div>
+            <div class="stitch-card-body">
+                <form asp-action="Dashboard" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="stitch-form-group">
+                        <label asp-for="NewProposal.Title" class="stitch-form-label"></label>
+                        <input asp-for="NewProposal.Title" class="stitch-input" placeholder="Enter project title" />
+                        <span asp-validation-for="NewProposal.Title" class="text-danger"></span>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div class="stitch-form-group">
+                            <label asp-for="NewProposal.TechnicalStack" class="stitch-form-label"></label>
+                            <input asp-for="NewProposal.TechnicalStack" class="stitch-input" placeholder="e.g. .NET 10, SQL Server, AI APIs" />
+                            <span asp-validation-for="NewProposal.TechnicalStack" class="text-danger"></span>
+                        </div>
+                        <div class="stitch-form-group">
+                            <label asp-for="NewProposal.ResearchArea" class="stitch-form-label"></label>
+                            <select asp-for="NewProposal.ResearchArea" class="stitch-select">
+                                <option value="">Select research area</option>
+                                @foreach (var area in Model.AvailableResearchAreas)
+                                {
+                                    <option value="@area">@area</option>
+                                }
+                            </select>
+                            <span asp-validation-for="NewProposal.ResearchArea" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="stitch-form-group">
+                        <label asp-for="NewProposal.Abstract" class="stitch-form-label"></label>
+                        <textarea asp-for="NewProposal.Abstract" class="stitch-textarea" placeholder="Describe the problem, approach, and expected outcomes..."></textarea>
+                        <span asp-validation-for="NewProposal.Abstract" class="text-danger"></span>
+                    </div>
+
+                    <div class="stitch-form-group">
+                        <label asp-for="NewProposal.Attachments" class="stitch-form-label"></label>
+                        <div style="background:#f8fafc;border:2px dashed #cbd5e1;border-radius:18px;padding:18px;">
+                            <input asp-for="NewProposal.Attachments" type="file" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png" />
+                            <span asp-validation-for="NewProposal.Attachments" class="text-danger"></span>
+                            <div style="margin-top:8px;font-size:12px;color:#64748b;">Upload PDF, JPG, JPEG, or PNG files. Maximum size: 5 MB each.</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:8px;">
+                        <p style="margin:0;font-size:12px;color:#64748b;max-width:420px;">Students may edit or withdraw a proposal until a final match is confirmed.</p>
+                        <button type="submit" class="stitch-btn"><span class="material-symbols-outlined stitch-fill">send</span><span>Submit Proposal</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="archive" class="stitch-card stitch-section-anchor" style="margin-top:28px;">
+            <div class="stitch-card-header" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div>
+                    <h3 class="stitch-card-title">Submission Archive</h3>
+                    <p class="stitch-page-subtitle" style="margin-top:6px;">View status, download attachments, or manage proposals before matching.</p>
+                </div>
+                <div style="width:42px;height:42px;border-radius:16px;background:#ecfeff;display:flex;align-items:center;justify-content:center;color:#0f766e;">
+                    <span class="material-symbols-outlined stitch-fill">inventory_2</span>
+                </div>
+            </div>
+
+            <div class="stitch-card-body">
+                @if (Model.MyProposals.Any())
+                {
+                    @foreach (var proposal in Model.MyProposals)
+                    {
+                        var badgeBg = proposal.Status == ProposalStatuses.Matched ? "#dcfce7" : proposal.Status == ProposalStatuses.UnderReview ? "#fef3c7" : proposal.Status == ProposalStatuses.Withdrawn ? "#e5e7eb" : "#e0f2fe";
+                        var badgeColor = proposal.Status == ProposalStatuses.Matched ? "#166534" : proposal.Status == ProposalStatuses.UnderReview ? "#92400e" : proposal.Status == ProposalStatuses.Withdrawn ? "#4b5563" : "#0c4a6e";
+                        var attachmentNames = proposal.Attachments != null ? string.Join(" ", proposal.Attachments.Select(a => a.OriginalFileName)) : string.Empty;
+                        var searchText = $"{proposal.Title} {proposal.ResearchArea} {proposal.TechnicalStack} {proposal.Status} {proposal.Abstract} {attachmentNames}";
+                        <div class="stitch-list-card" data-search-item data-search-text="@searchText">
+                            <div style="display:flex;justify-content:space-between;align-items:start;gap:16px;">
+                                <div>
+                                    <h5>@proposal.Title</h5>
+                                    <div class="stitch-muted" style="font-size:13px;margin-bottom:6px;">@proposal.ResearchArea • @proposal.TechnicalStack</div>
+                                </div>
+                                <div style="padding:8px 12px;border-radius:999px;background:@badgeBg;color:@badgeColor;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">@proposal.Status</div>
+                            </div>
+
+                            <p style="margin:12px 0 10px;color:#475569;font-size:14px;line-height:1.6;">@proposal.Abstract</p>
+                            <div style="font-size:12px;color:#64748b;margin-bottom:10px;">Created: @proposal.CreatedAtUtc.ToLocalTime()</div>
+
+                            @if (proposal.Attachments != null && proposal.Attachments.Any())
+                            {
+                                <div style="margin-top:12px;">
+                                    <strong style="font-size:13px;">Attachments</strong>
+                                    <ul style="margin:8px 0 0;padding-left:18px;">
+                                        @foreach (var file in proposal.Attachments)
+                                        {
+                                            <li style="margin-bottom:6px;">
+                                                <a asp-controller="Attachments" asp-action="Download" asp-route-id="@file.Id" target="_blank" style="text-decoration:none;color:#1d4ed8;font-weight:600;">@file.OriginalFileName</a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+
+                            @if (proposal.Status == ProposalStatuses.Matched)
+                            {
+                                <div class="alert alert-success mt-3 mb-0">Match confirmed. Supervisor identity revealed.</div>
+                                <div style="margin-top:12px;font-size:14px;color:#334155;">
+                                    <div><strong>Supervisor Name:</strong> @proposal.MatchedSupervisor?.FullName</div>
+                                    <div><strong>Supervisor Email:</strong> @proposal.MatchedSupervisor?.Email</div>
+                                </div>
+                            }
+                            else if (proposal.Status != ProposalStatuses.Withdrawn)
+                            {
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+                                    <a asp-action="Edit" asp-route-id="@proposal.Id" class="stitch-btn" style="text-decoration:none;box-shadow:none;background:#1d4ed8;">Edit Proposal</a>
+                                    <form asp-action="Withdraw" asp-route-id="@proposal.Id" method="post" onsubmit="return confirm('Withdraw this proposal?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger">Withdraw</button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="padding:18px;border-radius:18px;background:#f8fafc;color:#64748b;">You have not submitted any proposals yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="stitch-card" style="margin-bottom:24px;">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">Proposal Status</h3></div>
+            <div class="stitch-card-body">
+                <div style="display:grid;gap:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#eff6ff;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Pending</div><div style="font-size:13px;color:#334155;">Waiting for supervisor review</div></div><span class="material-symbols-outlined" style="color:#2563eb;">hourglass_top</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#fff7ed;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Under Review</div><div style="font-size:13px;color:#334155;">A supervisor has expressed interest</div></div><span class="material-symbols-outlined" style="color:#d97706;">visibility</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#f0fdf4;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Matched</div><div style="font-size:13px;color:#334155;">Identity revealed after confirmation</div></div><span class="material-symbols-outlined" style="color:#16a34a;">verified</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:#f3f4f6;"><div><div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;">Withdrawn</div><div style="font-size:13px;color:#334155;">Proposal removed from allocation</div></div><span class="material-symbols-outlined" style="color:#6b7280;">block</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stitch-card">
+            <div class="stitch-card-header"><h3 class="stitch-card-title">Blind Match Rules</h3></div>
+            <div class="stitch-card-body">
+                <ul style="margin:0;padding-left:18px;color:#475569;line-height:1.9;">
+                    <li>Supervisors cannot see your identity before confirmation.</li>
+                    <li>You may edit or withdraw only before final matching.</li>
+                    <li>Attachments are downloaded through secured authorization checks.</li>
+                    <li>Research area choices come from the coordinator-managed catalog.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

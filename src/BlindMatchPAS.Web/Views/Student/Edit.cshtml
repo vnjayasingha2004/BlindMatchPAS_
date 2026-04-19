@@ -1,0 +1,68 @@
+@model BlindMatchPAS.Web.Models.ViewModels.StudentProposalEditViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Edit Proposal";
+}
+
+<section id="overview" class="stitch-page-header stitch-section-anchor">
+    <div>
+        <h2 class="stitch-page-title">Edit Proposal</h2>
+        <p class="stitch-page-subtitle">Update project details before the proposal is finally matched.</p>
+    </div>
+</section>
+
+<div class="stitch-card" data-search-item data-search-text="@($"{Model.Title} {Model.ResearchArea} {Model.TechnicalStack} {Model.Abstract}")">
+    <div class="stitch-card-body">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <input asp-for="Id" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="stitch-form-group">
+                <label asp-for="Title" class="stitch-form-label"></label>
+                <input asp-for="Title" class="stitch-input" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="stitch-form-group">
+                    <label asp-for="TechnicalStack" class="stitch-form-label"></label>
+                    <input asp-for="TechnicalStack" class="stitch-input" />
+                    <span asp-validation-for="TechnicalStack" class="text-danger"></span>
+                </div>
+                <div class="stitch-form-group">
+                    <label asp-for="ResearchArea" class="stitch-form-label"></label>
+                    <select asp-for="ResearchArea" class="stitch-select">
+                        <option value="">Select research area</option>
+                        @foreach (var area in Model.AvailableResearchAreas)
+                        {
+                            <option value="@area">@area</option>
+                        }
+                    </select>
+                    <span asp-validation-for="ResearchArea" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="stitch-form-group">
+                <label asp-for="Abstract" class="stitch-form-label"></label>
+                <textarea asp-for="Abstract" class="stitch-textarea"></textarea>
+                <span asp-validation-for="Abstract" class="text-danger"></span>
+            </div>
+
+            <div class="stitch-form-group">
+                <label asp-for="NewAttachments" class="stitch-form-label"></label>
+                <input asp-for="NewAttachments" type="file" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png" />
+                <span asp-validation-for="NewAttachments" class="text-danger"></span>
+            </div>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button type="submit" class="stitch-btn">Save Changes</button>
+                <a asp-action="Dashboard" asp-fragment="archive" class="btn btn-outline-secondary">Back to Dashboard</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
